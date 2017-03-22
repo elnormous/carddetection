@@ -2,7 +2,7 @@ EXECUTABLE=carddetection
 CXXFLAGS=-c -Wall
 
 .PHONY: all
-CXXFLAGS+=-O2
+all: CXXFLAGS+=-O2
 all: $(EXECUTABLE)
 
 .PHONY: debug
