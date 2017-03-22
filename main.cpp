@@ -53,9 +53,8 @@ const Scalar contoursColor = Scalar(255, 0, 0, 255);
 const Scalar dotColor = Scalar(0, 128, 0);
 
 const Scalar rectColor = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
-Scalar circleColor = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
-
-Scalar textColor = Scalar(0, 0, 0);
+const Scalar circleColor = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
+const Scalar textColor = Scalar(0, 0, 0);
 
 // parameters
 int minCannyThreshold = 50;
@@ -503,130 +502,133 @@ int main()
         vector<vector<Point> > approxPolys(contours.size());
         vector<Rect> boundRects(contours.size());
 
-        for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex)
+        if (!hierarchy.empty())
         {
-            vector<Point> contour = contours[contourIndex];
-            
-        	double peri = arcLength(contour, true);
-            //cout << "Perimeter: " << peri << "\n";
-
-        	if (peri > 1000.0 && hierarchy[contourIndex][3] == -1) // has no parent and perimeter big enough
-        	{
-        	    approxPolyDP(Mat(contour), approxPolys[contourIndex], 0.001 * peri, true);
-                boundRects[contourIndex] = boundingRect(Mat(approxPolys[contourIndex]));
+            for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex)
+            {
+                vector<Point> contour = contours[contourIndex];
                 
-                vector<Point> poly = approxPolys[contourIndex];
+                double peri = arcLength(contour, true);
+                //cout << "Perimeter: " << peri << "\n";
 
-                if (poly.size() >= 4)
+                if (peri > 1000.0 && hierarchy[contourIndex][3] == -1) // has no parent and perimeter big enough
                 {
-                    vector<uint32_t> lineLengths;
+                    approxPolyDP(Mat(contour), approxPolys[contourIndex], 0.001 * peri, true);
+                    boundRects[contourIndex] = boundingRect(Mat(approxPolys[contourIndex]));
                     
-                    for (size_t pointIndex = 0; pointIndex < poly.size(); ++pointIndex)
-                    {
-                        Point current = poly[pointIndex];
-                        Point previous = (pointIndex == 0) ? poly[poly.size() - 1] : poly[pointIndex - 1];
-                        
-                        uint32_t length = norm(current - previous);
-                        
-                        lineLengths.push_back(length);
-                        
-                        //circle(drawing, current, 1, Scalar());
-                    }
-                    
-                    std::sort(lineLengths.begin(), lineLengths.end(), std::greater<int>());
-                    
-                    int shortestLine = lineLengths[3];
-                    
-                    vector<Vec4f> lines;
-                    
-                    for (size_t pointIndex = 0; pointIndex < poly.size(); ++pointIndex)
-                    {
-                        Point current = poly[pointIndex];
-                        Point previous = (pointIndex == 0) ? poly[poly.size() - 1] : poly[pointIndex - 1];
-                        
-                        uint32_t length = norm(current - previous);
-                        
-                        if (length >= shortestLine)
-                        {
-                            //line(drawing, previous, current, contoursColor, 5);
-                            
-                            Vec4f currentLine;
-                            
-                            // start x
-                            currentLine[0] = 0;
-                            
-                            // start y
-                            currentLine[1] = ((float)previous.y - current.y) / (previous.x - current.x) * -previous.x + previous.y;
-                            
-                            // end x
-                            currentLine[2] = frame.cols;
-                            
-                            // end y
-                            currentLine[3] = ((float)previous.y - current.y) / (previous.x - current.x) * (frame.cols - current.x) + current.y;
+                    vector<Point> poly = approxPolys[contourIndex];
 
-                            lines.push_back(currentLine);
-                            
-                            //line(drawing, Point2f(currentLine[0], currentLine[1]), Point2f(currentLine[2], currentLine[3]), contoursColor, 5);
-                        }
-                    }
-                    
-                    vector<Point2f> corners;
-                    
-                    for (size_t i = 0; i < lines.size(); ++i)
+                    if (poly.size() >= 4)
                     {
-                        for (size_t j = i + 1; j < lines.size(); ++j)
+                        vector<uint32_t> lineLengths;
+                        
+                        for (size_t pointIndex = 0; pointIndex < poly.size(); ++pointIndex)
                         {
-                            Point2f pt = computeIntersect(lines[i], lines[j]);
-                            if (pt.x >= 0 && pt.y >= 0)
+                            Point current = poly[pointIndex];
+                            Point previous = (pointIndex == 0) ? poly[poly.size() - 1] : poly[pointIndex - 1];
+                            
+                            uint32_t length = norm(current - previous);
+                            
+                            lineLengths.push_back(length);
+                            
+                            //circle(drawing, current, 1, Scalar());
+                        }
+                        
+                        std::sort(lineLengths.begin(), lineLengths.end(), std::greater<int>());
+                        
+                        int shortestLine = lineLengths[3];
+                        
+                        vector<Vec4f> lines;
+                        
+                        for (size_t pointIndex = 0; pointIndex < poly.size(); ++pointIndex)
+                        {
+                            Point current = poly[pointIndex];
+                            Point previous = (pointIndex == 0) ? poly[poly.size() - 1] : poly[pointIndex - 1];
+                            
+                            uint32_t length = norm(current - previous);
+                            
+                            if (length >= shortestLine)
                             {
-                                corners.push_back(pt);
+                                //line(drawing, previous, current, contoursColor, 5);
                                 
-                                circle(drawing, pt, 10, dotColor);
+                                Vec4f currentLine;
+                                
+                                // start x
+                                currentLine[0] = 0;
+                                
+                                // start y
+                                currentLine[1] = ((float)previous.y - current.y) / (previous.x - current.x) * -previous.x + previous.y;
+                                
+                                // end x
+                                currentLine[2] = frame.cols;
+                                
+                                // end y
+                                currentLine[3] = ((float)previous.y - current.y) / (previous.x - current.x) * (frame.cols - current.x) + current.y;
+
+                                lines.push_back(currentLine);
+                                
+                                //line(drawing, Point2f(currentLine[0], currentLine[1]), Point2f(currentLine[2], currentLine[3]), contoursColor, 5);
+                            }
+                        }
+                        
+                        vector<Point2f> corners;
+                        
+                        for (size_t i = 0; i < lines.size(); ++i)
+                        {
+                            for (size_t j = i + 1; j < lines.size(); ++j)
+                            {
+                                Point2f pt = computeIntersect(lines[i], lines[j]);
+                                if (pt.x >= 0 && pt.y >= 0)
+                                {
+                                    corners.push_back(pt);
+                                    
+                                    circle(drawing, pt, 10, dotColor);
+                                }
+                            }
+                        }
+                        
+                        Point2f center = calculateCenter(corners);
+                        circle(drawing, center, 20, dotColor);
+                        
+                        sortCorners(corners, center);
+                        
+                        if (corners.size() == 4)
+                        {
+                            line(drawing, corners[0], corners[1], contoursColor, 4);
+                            line(drawing, corners[1], corners[2], contoursColor, 4);
+                            line(drawing, corners[2], corners[3], contoursColor, 4);
+                            line(drawing, corners[3], corners[0], contoursColor, 4);
+                            
+                            //630mm x 870mm
+                            vector<Point2f> np;
+                            np.push_back(Point(0, 0));
+                            np.push_back(Point(cardSize.width, 0));
+                            np.push_back(Point(cardSize.width, cardSize.height));
+                            np.push_back(Point(0, cardSize.height));
+                            
+                            Mat transform = getPerspectiveTransform(corners, np);
+                            
+                            Mat warp;
+                            warpPerspective(frame, warp, transform, Point(cardSize.width, cardSize.height));
+                            
+                            Mat warp2;
+                            warpPerspective(thresh, warp2, transform, Point(cardSize.width, cardSize.height));
+                            
+                            if (!warp.empty() && !warp2.empty())
+                            {
+                                Card card = processCard(warp, warp2);
+                                
+                                stringstream s;
+                                s << rankToString(card.rank) << " of " << suitToString(card.suit);
+                                
+                                putText(drawing, s.str(), center, FONT_HERSHEY_SIMPLEX, 2.0, textColor, 3, 8, false);
                             }
                         }
                     }
-                    
-                    Point2f center = calculateCenter(corners);
-                    circle(drawing, center, 20, dotColor);
-                    
-                    sortCorners(corners, center);
-                    
-                    if (corners.size() == 4)
-                    {
-                        line(drawing, corners[0], corners[1], contoursColor, 4);
-                        line(drawing, corners[1], corners[2], contoursColor, 4);
-                        line(drawing, corners[2], corners[3], contoursColor, 4);
-                        line(drawing, corners[3], corners[0], contoursColor, 4);
-                        
-                        //630mm x 870mm
-                        vector<Point2f> np;
-                        np.push_back(Point(0, 0));
-                        np.push_back(Point(cardSize.width, 0));
-                        np.push_back(Point(cardSize.width, cardSize.height));
-                        np.push_back(Point(0, cardSize.height));
-                        
-                        Mat transform = getPerspectiveTransform(corners, np);
-                        
-                        Mat warp;
-                        warpPerspective(frame, warp, transform, Point(cardSize.width, cardSize.height));
-                        
-                        Mat warp2;
-                        warpPerspective(thresh, warp2, transform, Point(cardSize.width, cardSize.height));
-                        
-                        if (!warp.empty() && !warp2.empty())
-                        {
-                            Card card = processCard(warp, warp2);
-                            
-                            stringstream s;
-                            s << rankToString(card.rank) << " of " << suitToString(card.suit);
-                            
-                            putText(drawing, s.str(), center, FONT_HERSHEY_SIMPLEX, 2.0, textColor, 3, 8, false);
-                        }
-                    }
-                }
 
-                rectangle(drawing, boundRects[contourIndex].tl(), boundRects[contourIndex].br(), rectColor, 2, 8, 0);
-        	}
+                    rectangle(drawing, boundRects[contourIndex].tl(), boundRects[contourIndex].br(), rectColor, 2, 8, 0);
+                }
+            }
         }
 
         imshow("Original", resizeToWidth(drawing, WINDOW_WIDTH));
