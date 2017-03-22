@@ -1,2 +1,4 @@
 cards.xcodeproj/project.xcworkspace
 cards.xcodeproj/xcuserdata
+*.o
+carddetection
